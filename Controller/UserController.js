@@ -20,11 +20,14 @@ export const Signup = async (req, res) => {
             email
         });
 
+        const userData = user.toObject()
+        delete userData.password
+
         return res.status(201).json({
             success: true,
             msg: "User created successfully",
-            data: user
-        });
+            data: userData
+        })
 
     } catch (error) {
         console.log(error)
@@ -58,7 +61,7 @@ export const login = async (req, res) => {
         }
 
         const token = jwt.sign(
-            { userId: user._id },
+            { id: user._id },
             process.env.JWT_SECRET,
             { expiresIn: "7d" }
         );

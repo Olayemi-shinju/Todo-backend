@@ -6,12 +6,12 @@ import userRoute from './Route/UserRoute.js';
 import TaskRoute from "./Route/TaskRoute.js";
 dotenv.config();
 
-const PORT = process.env.PORT || 6000;
+const PORT = process.env.PORT || 8000;
 const app = express();
 
 
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://locahost:5173',
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE']
 }));
