@@ -127,12 +127,12 @@ export const UpdateUser = async (req, res) => {
 export const getSingleUser = async (req, res) => {
     try {
         const { id } = req.params
-        const user = await User.findById(id)
+        const user = await User.findById(id).select('-password').select('-__v')
         if (!user) return res.status(404).json({ success: false, msg: 'User not found' })
 
         res.status(200).json({ success: true, msg: 'User found successfuly', data: user })
     } catch (error) {
-        console.log(error.message)
+        console.log(error)
         res.status(500).json({ success: false, msg: 'An error occured' })
     }
 }

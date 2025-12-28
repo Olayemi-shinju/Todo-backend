@@ -25,13 +25,12 @@ export const newTask = async (req, res) => {
 export const updateTask = async (req, res) => {
     try {
         const { id } = req.params
-        const { title, description } = req.body
+        const { title, description, dueDate } = req.body
 
-        if (!title || !description) {
-            res.status(401).json({ succsss: false, msg: 'Title and description value is required' })
+        const resp = await Task.findByIdAndUpdate(id, { title, description, dueDate }, { new: true })
+        if (!resp) {
+            return res.status(404).json({ success: false, msg: 'Task not found' });
         }
-
-        const resp = await Task.findByIdAndUpdate(id, { title, description }, { new: true })
         res.status(200).json({ success: true, msg: 'Task Updated Successfully', data: resp })
     } catch (error) {
         console.log(error.message)
