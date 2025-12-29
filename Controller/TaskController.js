@@ -27,7 +27,7 @@ export const updateTask = async (req, res) => {
         const { id } = req.params
         const { title, description, dueDate } = req.body
 
-        const resp = await Task.findByIdAndUpdate(id, { title, description, dueDate }, { new: true })
+        const resp = await Task.findByIdAndUpdate(id, { title, description, dueDate, completed: false }, { new: true })
         if (!resp) {
             return res.status(404).json({ success: false, msg: 'Task not found' });
         }
@@ -39,22 +39,52 @@ export const updateTask = async (req, res) => {
 }
 
 export const deleteTask = async (req, res) => {
-    try {
-        const { id } = req.params
-        const userId = req.user._id
-        const user = await Task.findOne({ _id: id, user: userId })
-        if (!user) {
-            res.status(401).json({ success: false, msg: 'Failed to delete task' })
-            return
-        }
-        await Task.findByIdAndDelete(id)
-        const task = await Task.find({ user: userId }).sort({ createdAt: -1 })
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
 
-        res.status(200).json({ data: task })
-    } catch (error) {
-        console.log(error.message)
+    const taskExists = await Task.findOne({ _id: id, user: userId });
+    if (!taskExists) {
+      return res
+        .status(404)
+        .json({ success: false, msg: "Task not found" });
     }
-}
+
+    await Task.findByIdAndDelete(id);
+
+    const tasks = await Task.find({ user: userId }).sort({
+      createdAt: -1,
+    });
+
+    const tasksWithStatus = tasks.map((task) => {
+      let status = "pending";
+
+      if (task.completed) status = "completed";
+      else if (task.dueDate && new Date() > task.dueDate)
+        status = "overdue";
+
+      return {
+        id: task._id,
+        title: task.title,
+        description: task.description,
+        dueDate: task.dueDate,
+        completed: task.completed,
+        status,
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data: tasksWithStatus,
+    });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({
+      success: false,
+      msg: "Failed to delete task",
+    });
+  }
+};
 
 export const getUserTask = async (req, res) => {
     try {
@@ -111,39 +141,55 @@ export const getSingleTask = async (req, res) => {
     }
 };
 
-
 export const Iscomplete = async (req, res) => {
-    try {
-        const userId = req.user._id;
-        const { completed } = req.body;
-        const { id } = req.params;
+  try {
+    const userId = req.user._id;
+    const { completed } = req.body;
+    const { id } = req.params;
 
-        const task = await Task.findOne({ _id: id, user: userId });
-        if (!task) {
-            return res.status(404).json({ success: false, msg: "Task not found" });
-        }
-
-        task.completed = completed;
-        await task.save();
-
-        let status = "pending";
-        if (task.completed) status = "completed";
-        else if (task.dueDate && new Date() > task.dueDate) status = "overdue";
-
-        res.status(200).json({
-            success: true,
-            msg: "Task status updated successfully",
-            data: {
-                id: task._id,
-                title: task.title,
-                description: task.description,
-                dueDate: task.dueDate,
-                status,
-            }
-        });
-
-    } catch (error) {
-        console.log(error.message);
-        res.status(500).json({ success: false, msg: "An error occurred" });
+    // Ensure completed is boolean
+    if (typeof completed !== "boolean") {
+      return res.status(400).json({
+        success: false,
+        msg: "completed must be true or false",
+      });
     }
+
+    const task = await Task.findOne({ _id: id, user: userId });
+    if (!task) {
+      return res.status(404).json({
+        success: false,
+        msg: "Task not found",
+      });
+    }
+
+    // Update completed field
+    task.completed = completed;
+    await task.save();
+
+    // Derive status
+    let status = "pending";
+    if (task.completed) status = "completed";
+    else if (task.dueDate && new Date() > task.dueDate) status = "overdue";
+
+    return res.status(200).json({
+      success: true,
+      msg: "Task status updated successfully",
+      data: {
+        id: task._id,
+        title: task.title,
+        description: task.description,
+        dueDate: task.dueDate,
+        completed: task.completed, // 👈 IMPORTANT
+        status,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      msg: "An error occurred",
+    });
+  }
 };
+
