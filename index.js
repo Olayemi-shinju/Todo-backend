@@ -21,8 +21,8 @@ app.use(express.json());
 
 Db_connect();
 
-app.use('/api/v1', userRoute);
-app.use('/api/v1', TaskRoute);
+app.use(userRoute);
+app.use(TaskRoute);
 
 
 app.listen(PORT, () => {``
