@@ -21,22 +21,52 @@ export const newTask = async (req, res) => {
     }
 }
 
-
 export const updateTask = async (req, res) => {
-    try {
-        const { id } = req.params
-        const { title, description, dueDate } = req.body
+  try {
+    const { id } = req.params;
+    const { title, description, dueDate } = req.body;
 
-        const resp = await Task.findByIdAndUpdate(id, { title, description, dueDate, completed: false }, { new: true })
-        if (!resp) {
-            return res.status(404).json({ success: false, msg: 'Task not found' });
-        }
-        res.status(200).json({ success: true, msg: 'Task Updated Successfully', data: resp })
-    } catch (error) {
-        console.log(error.message)
-        res.status(500).json({ success: false, msg: 'An error ocurred' })
+    if (dueDate) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const selectedDate = new Date(dueDate);
+      selectedDate.setHours(0, 0, 0, 0);
+
+      if (selectedDate < today) {
+        return res.status(400).json({
+          success: false,
+          msg: "Updated date cannot be in the past",
+        });
+      }
     }
-}
+
+    const resp = await Task.findByIdAndUpdate(
+      id,
+      { title, description, dueDate, completed: false },
+      { new: true }
+    );
+
+    if (!resp) {
+      return res.status(404).json({
+        success: false,
+        msg: "Task not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      msg: "Task updated successfully",
+      data: resp,
+    });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({
+      success: false,
+      msg: "An error occurred",
+    });
+  }
+};
 
 export const deleteTask = async (req, res) => {
   try {
