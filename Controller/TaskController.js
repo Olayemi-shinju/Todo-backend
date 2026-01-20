@@ -37,13 +37,13 @@ export const updateTask = async (req, res) => {
       if (selectedDate < today) {
         return res.status(400).json({
           success: false,
-          msg: "Updated date cannot be in the past",
+          msg: "Updated date cannot be in the past"
         });
       }
     }
 
     const resp = await Task.findByIdAndUpdate(
-      { id, user: userId },
+      { _id: id, user: userId },
       { title, description, dueDate, completed: false },
       { new: true }
     );
